@@ -1,5 +1,7 @@
 import cv2
 
+#メインはこっから借りてきた　https://qiita.com/mix_dvd/items/98feedc8c98bc7790b30
+
 if __name__ == '__main__':
     # 定数定義
     ESC_KEY = 27     # Escキー
