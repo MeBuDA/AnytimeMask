@@ -16,7 +16,8 @@ if __name__ == '__main__':
 
     # 分類器の指定
     #cascade_file = "Python\haarcascade_mcs_mouth.xml"
-    cascade_file = "Python\haarcascade_frontalface_alt_tree.xml"
+    cascade_file = "Python\haarcascade_frontalface_alt2.xml"
+    #cascade_file = "Python\haarcascade_frontalface_alt_tree.xml"
 
     cascade = cv2.CascadeClassifier(cascade_file)
 
@@ -27,10 +28,11 @@ if __name__ == '__main__':
     end_flag, c_frame = cap.read()
     height, width, channels = c_frame.shape
 
-    #黒画像生成
+    #黒背景生成
     black = np.zeros((height, width, 3))
-    fd = black.copy()#テスト用
-
+    mask = black.copy()#テスト用
+    front_img = black.copy()
+    
     # ウィンドウの準備
     cv2.namedWindow(GAUSSIAN_WINDOW_NAME)
 
@@ -40,20 +42,25 @@ if __name__ == '__main__':
         # 画像の取得と顔の検出
         img = c_frame
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        face_list = cascade.detectMultiScale(img_gray,scaleFactor=1.1, minNeighbors=2, minSize=(50, 50))
+        face_list = cascade.detectMultiScale(img_gray,scaleFactor=1.1, minNeighbors=3, minSize=(50, 50))
         #face_list = tuple(map(float,face_list))
         # 検出した顔に印を付ける
         for (x, y, w, h) in face_list:
             #顔の大きさにマスクをリサイズ
             resizesrc = cv2.resize(src,(w,h))
-            mask = resizesrc[:,:,3]  # アルファチャンネルだけ抜き出す
-            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)  # 3色分に増やす
-            #土台にマスクの貼り付け
-            fd = black.copy()
-            fd[y:h+y,x:w+x] = mask 
+            mask_material = resizesrc[:,:,3]  # アルファチャンネルだけ抜き出す
+            mask_material = cv2.cvtColor(mask_material, cv2.COLOR_GRAY2RGB)  # 3色分に増やす
+            #黒背景にマスクの貼り付け
+            mask = black.copy()
+            mask[y:h+y,x:w+x] = mask_material 
+            #黒背景にresizesrcを貼り付け
+            front_img = black.copy()
+            front_img_material = resizesrc[:,:,:3] #アルファチャンネルをカット
+            front_img[y:h+y,x:w+x] = front_img_material
+
 
         # フレーム表示
-        cv2.imshow(GAUSSIAN_WINDOW_NAME, fd)
+        cv2.imshow(GAUSSIAN_WINDOW_NAME, front_img)
 
         # Escキーで終了
         key = cv2.waitKey(INTERVAL)
