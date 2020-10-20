@@ -15,9 +15,7 @@ if __name__ == '__main__':
     src = cv2.imread('pic\mask.png', -1)
 
     # 分類器の指定
-    #cascade_file = "Python\haarcascade_mcs_mouth.xml"
     cascade_file = "Python\haarcascade_frontalface_alt2.xml"
-    #cascade_file = "Python\haarcascade_frontalface_alt_tree.xml"
 
     cascade = cv2.CascadeClassifier(cascade_file)
 
@@ -29,9 +27,7 @@ if __name__ == '__main__':
     height, width, channels = c_frame.shape
 
     #黒背景生成
-    black = np.zeros((height, width, 3))
-    mask = black.copy()#テスト用
-    front_img = black.copy()
+    black = np.zeros((height, width, 3), np.uint8)
     
     # ウィンドウの準備
     cv2.namedWindow(GAUSSIAN_WINDOW_NAME)
@@ -43,24 +39,36 @@ if __name__ == '__main__':
         img = c_frame
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         face_list = cascade.detectMultiScale(img_gray,scaleFactor=1.1, minNeighbors=3, minSize=(50, 50))
-        #face_list = tuple(map(float,face_list))
+
         # 検出した顔に印を付ける
-        for (x, y, w, h) in face_list:
-            #顔の大きさにマスクをリサイズ
-            resizesrc = cv2.resize(src,(w,h))
-            mask_material = resizesrc[:,:,3]  # アルファチャンネルだけ抜き出す
-            mask_material = cv2.cvtColor(mask_material, cv2.COLOR_GRAY2RGB)  # 3色分に増やす
-            #黒背景にマスクの貼り付け
-            mask = black.copy()
-            mask[y:h+y,x:w+x] = mask_material 
-            #黒背景にresizesrcを貼り付け
-            front_img = black.copy()
-            front_img_material = resizesrc[:,:,:3] #アルファチャンネルをカット
-            front_img[y:h+y,x:w+x] = front_img_material
+        if len(face_list) > 0:
+            for (x, y, w, h) in face_list:
+                #顔の大きさにマスクをリサイズ
+                resizesrc = cv2.resize(src,(w,h))
+                mask_material = resizesrc[:,:,3]  # アルファチャンネルだけ抜き出す
+                mask_material = cv2.cvtColor(mask_material, cv2.COLOR_GRAY2BGR)  # 3色分に増やす
+            
+                #黒背景にマスクの貼り付け
+                mask = black.copy()
+                mask[y:h+y,x:w+x] = mask_material
+            
+                #黒背景にresizesrcを貼り付け
+                front_img = black.copy()
+                front_img_material = resizesrc[:,:,:3] #アルファチャンネルをカット
+                front_img[y:h+y,x:w+x] = front_img_material
 
+                #マスク反転
+                mask = cv2.bitwise_not(mask)
 
-        # フレーム表示
-        cv2.imshow(GAUSSIAN_WINDOW_NAME, front_img)
+                #カメラ画像からマスク部分を切り抜く
+                back_img = cv2.bitwise_and(c_frame,mask)
+
+                img_out =  cv2.bitwise_or(front_img, back_img)
+
+            # フレーム表示
+            cv2.imshow(GAUSSIAN_WINDOW_NAME, img_out)
+        else:
+            cv2.imshow(GAUSSIAN_WINDOW_NAME, c_frame)
 
         # Escキーで終了
         key = cv2.waitKey(INTERVAL)
