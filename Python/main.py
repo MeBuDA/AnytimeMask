@@ -7,7 +7,7 @@ if __name__ == '__main__':
     # 定数定義
     ESC_KEY = 27     # Escキー
     INTERVAL= 33     # 待ち時間
-    FRAME_RATE = 30  # fps
+    FRAME_RATE = 60  # fps
 
     GAUSSIAN_WINDOW_NAME = "AnytimeMask"
 
